@@ -218,7 +218,6 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
             filename = os.path.join(filename, stripped_filename)
             for plugin_class in list_to_export:
                 if len(plugin_class) == 0:
-                    pass
                     count += 1
                 else:
                     with open(filename + "_" + category[count] + ".csv", "w+") as save_file:
@@ -237,7 +236,6 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                 writerfile = csv.writer(save_file, delimiter=",")
                 for plugin_class in list_to_export:
                     if len(plugin_class) == 0:
-                        pass
                         count += 1
                     else:
                         writerfile.writerow([category[count]])
@@ -246,15 +244,16 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                                              "{:^2}".format("Type")])
                         for plugin in plugin_class.values():
                             writerfile.writerow(plugin.file_output())
-                        writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
                         writerfile.writerow([" "])
                         count += 1
+                writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
 
     elif not sep_files:
         count = 0
         with open(filename + ".csv", "w+") as save_file:
             writerfile = csv.writer(save_file, delimiter=",")
             for plugin_class in list_to_export:
+
                 if plugin_class == 0:
                     pass
                 else:
@@ -269,6 +268,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                     count += 1
 
 
+
     else:
         source_path, stripped_filename = filename.rsplit("/", 1)
         os.system("mkdir {}".format(filename))
@@ -279,8 +279,8 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
             writerfile.writerow([category])
 
             for printer in list_to_export.values():
-                writerfile.writerow(["Total " + category + ": " + str(len(list_to_export))])
                 writerfile.writerow(printer.file_output())
+            writerfile.writerow(["Total " + category + ": " + str(len(list_to_export))])
 
 def main():
     pass
