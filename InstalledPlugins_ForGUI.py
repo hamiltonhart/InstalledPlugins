@@ -19,34 +19,82 @@ import subprocess
 website_key = "CFBundleIdentifier"
 version_key = "CFBundleShortVersionString"
 
-plug_aax_used_path = "/Library/Application Support/Avid/Audio/Plug-Ins/"
-plug_aax_unused_path = "/Library/Application Support/Avid/Audio/Plug-Ins (Unused)/"
-plug_waves_path = "/Applications/Waves/Plug-Ins V9/"
-plist_path = "Contents/Info.plist"
+# AAX
+aax_base_path = "/Library/Application Support/Avid/Audio/"
+plug_aax_used_path = os.path.join(aax_base_path, "Plug-Ins/")
+plug_aax_unused_path = os.path.join(aax_base_path, "Plug-Ins (Unused)/")
 
 aax_suffix = ".aaxplugin"
+
+# Waves
+plug_waves_path = "/Applications/Waves/Plug-Ins V9/"
+
 waves_suffix = ".bundle"
 
+# VST and AU
+other_plug_base = "/Library/Audio/Plug-Ins/"
+plug_vst_path = os.path.join(other_plug_base, "VST")
+plug_vst3_path = os.path.join(other_plug_base, "VST3")
+plug_au_path = os.path.join(other_plug_base, "Audio Units")
+
+vst_suffix = ".vst"
+vst3_suffix = ".vst3"
+au_suffix = ".au"
+
+plist_path = "Contents/Info.plist"
+
+# {plugin_type: [path, suffix, plist_path]}
+plugin_info_dict = {"AAX": [plug_aax_used_path, aax_suffix, plist_path],
+                    "AAX Unused": [plug_aax_unused_path, aax_suffix, plist_path],
+                    "Waves": [plug_waves_path, waves_suffix, plist_path],
+                    "AU": [plug_au_path, au_suffix, plist_path],
+                    "VST": [plug_vst_path, vst_suffix, plist_path],
+                    "VST3": [plug_vst3_path, vst3_suffix, plist_path]}
+
+
+'''Needs resolution:
+1) plugin_type
+2) confirm how path is defined, possibly a dictionary with plugin_type and paths
+    - AU
+    - VST
+    - VST3
+'''
 class Plugin:
 
-    def __init__(self, fullname, path, version):
+    def __init__(self, type, fullname, path, suffix, version):
+        self.type = type
         self.fullname = fullname
         self.path = path
         self.version = version
         self.fullpath = os.path.join(self.path, self.fullname)
+        self.shortname = fullname.replace(suffix, "")
     # All will have:
         # manufactuer
         # info (not all will have this, look at plist file)
 
-class AAXPlugin(Plugin):
+    def file_output(self):
+        return [self.shortname, self.version, self.type]
+
+    def gui_output(self):
+        return "{},{},{}".format(self.shortname, self.version, self.type)
+
+    def __str__(self):
+        return "{:<30}{:^30}{:>30}".format(self.shortname, self.version, self.type)
+
+class AAX(Plugin):
 
     used_path = "/Library/Application Support/Avid/Audio/Plug-Ins"
     unused_path = "/Library/Application Support/Avid/Audio/Plug-Ins (Unused)"
 
-    def __init__(self, fullname, path, version):
-        super().__init__(fullname, path, version)
-        self.shortname = fullname.replace(".aaxplugin", "")
+    def __init__(self, type, fullname, path, suffix, version):
+        super().__init__(type, fullname, path, suffix, version)
 
+        if self.unused:
+            self.type = "AAX Unused"
+        else:
+            self.type = "AAX"
+
+    # Not currently implemented
     def move_plug(self):
         if not self.unused[0]:
             password = getpass("Password: ")
@@ -58,50 +106,48 @@ class AAXPlugin(Plugin):
             os.system("{} mv {} {}".format(self.sudo(password), self.fullpath, self.used_path))
             self.path = self.used_path
 
-    def file_output(self):
-        return [self.shortname, self.version, self.unused[1]]
-
-    @property
-    def unused(self):
-        if "Unused" in self.path:
-            return True, "Plug-Ins Unused"
-        else:
-            return False, "Plug-Ins"
-
-    @classmethod
-    def from_list(cls, input_list):
-        return cls(input_list[0], input_list[1], input_list[2])
-
     @staticmethod
     def sudo(password):
         return "echo {} | sudo -S".format(password)
 
-    def gui_output(self):
-        return "{},{},{}".format(self.shortname, self.version, self.unused[1])
 
+    @property
+    def unused(self):
+        if "Unused" in self.path:
+            return True
+        else:
+            return False
 
-    def __str__(self):
-        return "{:<30}{:^30}{:>30}".format(self.shortname, self.version, self.unused[1])
+    # @classmethod
+    # def from_list(cls, input_list):
+    #     return cls(input_list[0], input_list[1], input_list[2])
 
 class Waves(Plugin):
 
-    def __init__(self, fullname, path, version):
-        super().__init__(fullname, path, version)
-        self.shortname = fullname.replace(".bundle", "")
-        self.waves_flag = "Waves"
+    def __init__(self, type, fullname, path, suffix, version):
+        super().__init__(type, fullname, path, suffix, version)
 
-    def file_output(self):
-        return [self.shortname, self.version, self.waves_flag]
 
-    @classmethod
-    def from_list(cls, input_list):
-        return cls(input_list[0], input_list[1], input_list[2])
+class VST(Plugin):
 
-    def gui_output(self):
-        return "{},{},{}".format(self.shortname, self.version, self.waves_flag)
+    def __init__(self, type, fullname, path, suffix, version):
+        super().__init__(type, fullname, path, suffix, version)
 
-    def __str__(self):
-        return "{:<30}{:^30}{:>30}".format(self.shortname, self.version, self.waves_flag)
+
+class VST3(Plugin):
+
+    def __init__(self, type, fullname, path, suffix, version):
+        super().__init__(type, fullname, path, suffix, version)
+
+class AU(Plugin):
+
+    def __init__(self, type, fullname, path, suffix, version):
+        super().__init__(type, fullname, path, suffix, version)
+
+    # @classmethod
+    # def from_list(cls, input_list):
+    #     return cls(input_list[0], input_list[1], input_list[2])
+
 
 def read_plist(path, vers_keyword, plist_path):  # web_keyword
     plist_loc = os.path.join(path, plist_path)
@@ -111,13 +157,15 @@ def read_plist(path, vers_keyword, plist_path):  # web_keyword
     # website = file_info[web_keyword]
     return version  # website
 
-def find_plugin_info(path, suffix, vers_keyword, plist_path, new_class):  # web_keyword,
+"""Document function once amended."""
+def find_plugin_info(path, suffix, vers_keyword, plist_path, new_class, type):  # web_keyword,
     info_dict = {}
     for root, dirs, files in os.walk(path):
         for dir in dirs:
             if dir.endswith(suffix):
                 full_path = os.path.join(root, dir)
-                add_class = new_class(dir, full_path, read_plist(full_path, vers_keyword, plist_path))
+                version = read_plist(full_path, vers_keyword, plist_path)
+                add_class = new_class(type, dir, full_path, suffix, read_plist(full_path, vers_keyword, plist_path))
                 info_dict[add_class.shortname] = add_class
     return info_dict  # remove dictionary creation and make class list
 
@@ -147,14 +195,14 @@ def list_dicts(dict_to_search):
     return text_to_return
 
 def create_new_classes():
-    aax_dict = find_plugin_info(plug_aax_used_path, aax_suffix, version_key, plist_path, AAXPlugin)
-    unused_dict = find_plugin_info(plug_aax_unused_path, aax_suffix, version_key, plist_path, AAXPlugin)
-    waves_dict = find_plugin_info(plug_waves_path, waves_suffix, version_key, plist_path, Waves)
+    all_plugins = []
+    plugin_classes = {"AAX": AAX, "AAX Unused": AAX, "Waves": Waves, "VST": VST, "VST3": VST3, "AU": AU}
 
-    all_plugins = [aax_dict, unused_dict, waves_dict]
+    for key, value in plugin_info_dict.items():
+        new_item = find_plugin_info(value[0], value[1], version_key, value[2], plugin_classes[key], key)
+        all_plugins.append(new_item)
 
-
-    return aax_dict, unused_dict, waves_dict, all_plugins
+    return all_plugins
 
 def export_plugins_list(filename, list_to_export, category, all_plugins=True, sep_files=False):
 

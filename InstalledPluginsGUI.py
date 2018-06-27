@@ -139,7 +139,7 @@ class Window(QtWidgets.QWidget):
         v_box_2_h_mid_1.addWidget(self.clear_btn)
 
         # Instance of the table view is created. Header labels are defined.
-        self.text_display = ListView(0, 3, "Plugin", "Version", "Location")
+        self.text_display = ListView(0, 3, "Plugin", "Version", "Type")
         v_box_main.addWidget(self.text_display)
 
         self.search_btn.clicked.connect(self.search_box_input)
@@ -213,11 +213,19 @@ class Window(QtWidgets.QWidget):
         if self.checkboxes["All Plugins"].isChecked():
             self.checkboxes["All Plugins"].setChecked(False)
 
-aax_dict, unused_dict, waves_dict, all_plugins = InstalledPlugins_ForGUI.create_new_classes()
-categories = {"AAX Used": aax_dict,
-              "AAX Unused": unused_dict,
-              "Waves": waves_dict,
-              "All Plugins": all_plugins}
+"""Creates a list (all_dicts) from the return of the function call.
+Creates a list (category_item) from the keys of a dictionary in the imported module. The dictionary the keys are
+derived from is iterated over to get the return of create_new_classes().
+Creates a categories dictionary from the above lists using the category_item list as the key and all_dicts as the 
+value.
+Finally, the all_dicts list is added to the categories dict.
+"""
+all_dicts = InstalledPlugins_ForGUI.create_new_classes()
+category_item = [key for key in InstalledPlugins_ForGUI.plugin_info_dict.keys()]
+categories = {}
+for i, item in enumerate(all_dicts):
+    categories[category_item[i]] = item
+categories["All Plugins"] = all_dicts
 
 app = QtWidgets.QApplication(sys.argv)
 
