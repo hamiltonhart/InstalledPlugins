@@ -13,6 +13,7 @@ class ListView(QtWidgets.QTableWidget):
 
         header_labels = [arg for arg in args]
         self.setHorizontalHeaderLabels(header_labels)
+        self.display_total = 0
 
         self.show()
 
@@ -21,6 +22,7 @@ class ListView(QtWidgets.QTableWidget):
     def addItem(self, csv_iterable, append=False, count=0):
         if not append and count == 0:
             self.setRowCount(0)
+            self.display_total = 0
 
         for row_item in csv_iterable:
             row = self.rowCount()
@@ -29,6 +31,7 @@ class ListView(QtWidgets.QTableWidget):
             for column, row_content in enumerate(row_contents):
                 row_content = QtWidgets.QTableWidgetItem(row_content)
                 self.setItem(row, column, row_content)
+            self.display_total += 1
 
     # Writes the information in the table to a csv file.
     def save_sheet(self):
@@ -49,6 +52,7 @@ class ListView(QtWidgets.QTableWidget):
     # Resets the table to 0 rows, effectively clearing it.
     def clear_all(self):
         self.setRowCount(0)
+        self.display_total = 0
 
 
 # Defines the main window
@@ -61,7 +65,7 @@ class Window(QtWidgets.QWidget):
     def init_ui(self):
         # Name and dimension of the window are defined.
         self.setWindowTitle("Plugins")
-        self.setMaximumWidth(450)
+        self.setMaximumWidth(700)
         self.setMinimumWidth(450)
         self.setMinimumHeight(500)
 
@@ -69,7 +73,9 @@ class Window(QtWidgets.QWidget):
         v_box_main = QtWidgets.QVBoxLayout()
         h_box_top = QtWidgets.QHBoxLayout()
         h_box_mid_1 = QtWidgets.QHBoxLayout()
+        # h_box_mid_1.addStretch()
         v_box_1_h_mid_1 = QtWidgets.QVBoxLayout()
+        h_box_1_v_box_1 = QtWidgets.QHBoxLayout()
         v_box_2_h_mid_1 = QtWidgets.QVBoxLayout()
         v_box_checkboxes = QtWidgets.QVBoxLayout()
         h_box_buttons = QtWidgets.QHBoxLayout()
@@ -89,6 +95,7 @@ class Window(QtWidgets.QWidget):
 
         h_box_top.addLayout(v_box_checkboxes)
         h_box_top.addLayout(v_box_chk_btns)
+        h_box_top.addStretch(1)
         h_box_mid_1.addLayout(v_box_1_h_mid_1)
         h_box_mid_1.addLayout(v_box_2_h_mid_1)
 
@@ -106,7 +113,6 @@ class Window(QtWidgets.QWidget):
             self.checkboxes[label].clicked.connect(self.uncheck_allplugins_box)
         self.checkboxes["All Plugins"].setChecked(True)
 
-
         # Sets primary buttons. Other buttons may be added? Create a buttons class?
         btn_labels = ["View", "Export"]
         btns = {}
@@ -120,12 +126,17 @@ class Window(QtWidgets.QWidget):
         self.export_sep_files.setToolTip("Exports the selected plugin types/locations into separate files. "
                                          "Type/location will be appended to the filename supplied for clarity.")
         self.append_check = QtWidgets.QCheckBox("Append")
+
         self.export_displayed_button = QtWidgets.QCheckBox("Export Displayed")
         self.export_displayed_button.setToolTip("Exports only what is displayed in the box below regardless of "
                                                 "selection on the left.")
 
         h_box_chk_options.addWidget(self.export_sep_files)
         h_box_chk_options.addWidget(self.export_displayed_button)
+
+        # Instance of the table view is created. Header labels are defined.
+        self.text_display = ListView(0, 3, "Plugin", "Version", "Type")
+        self.display_total = QtWidgets.QLabel("Total Displayed: " + str(self.text_display.display_total))
 
         # Search button, bar and clear button are created. When ENTER is pressed, search button activates
         self.search_box = QtWidgets.QLineEdit()
@@ -134,16 +145,18 @@ class Window(QtWidgets.QWidget):
         self.clear_btn = QtWidgets.QPushButton("Clear")
         self.search_box.returnPressed.connect(self.search_box_input)
         v_box_1_h_mid_1.addWidget(self.search_box)
-        v_box_1_h_mid_1.addWidget(self.append_check)
+        v_box_1_h_mid_1.addLayout(h_box_1_v_box_1)
+        h_box_1_v_box_1.addWidget(self.append_check)
+        h_box_1_v_box_1.addSpacing(50)
+        h_box_1_v_box_1.addWidget(self.display_total)
+        h_box_1_v_box_1.addStretch(1)
         v_box_2_h_mid_1.addWidget(self.search_btn)
         v_box_2_h_mid_1.addWidget(self.clear_btn)
 
-        # Instance of the table view is created. Header labels are defined.
-        self.text_display = ListView(0, 3, "Plugin", "Version", "Type")
         v_box_main.addWidget(self.text_display)
 
         self.search_btn.clicked.connect(self.search_box_input)
-        self.clear_btn.clicked.connect(self.text_display.clear_all)
+        self.clear_btn.clicked.connect(self.clear_button_click)
 
         btns["Export"].clicked.connect(lambda: self.text_display.save_sheet() if self.export_displayed_button.isChecked()
                                        else self.export_button_click())
@@ -159,6 +172,7 @@ class Window(QtWidgets.QWidget):
         text_results = [x.gui_output() for x in InstalledPlugins_ForGUI.search_dicts(self.search_box.text().lower(),
                                                                             all_dicts)]
         self.text_display.addItem(text_results, append=append)
+        self.show_view_total()
 
     def view_button_click(self):
         append = False
@@ -179,6 +193,8 @@ class Window(QtWidgets.QWidget):
                     text_results = InstalledPlugins_ForGUI.list_dicts(categories[item])
                     self.text_display.addItem(text_results, append=append, count=count)
                     count += 1
+
+        self.show_view_total()
 
     def export_button_click(self):  # Needs updating?
         path = QtWidgets.QFileDialog.getSaveFileName(self, "Save CSV", os.getenv("HOME"), "CSV.csv")
@@ -201,6 +217,11 @@ class Window(QtWidgets.QWidget):
                         InstalledPlugins_ForGUI.export_plugins_list(path[0], categories[item], item, all_plugins=False,
                                                                     sep_files=True)
 
+    def clear_button_click(self):
+        self.text_display.clear_all()
+        self.show_view_total()
+
+
     def all_plugins_checked(self):
         for label in self.checkbox_labels:
             if label == "All Plugins":
@@ -211,6 +232,14 @@ class Window(QtWidgets.QWidget):
     def uncheck_allplugins_box(self):
         if self.checkboxes["All Plugins"].isChecked():
             self.checkboxes["All Plugins"].setChecked(False)
+
+    def show_view_total(self):
+        if self.text_display.display_total == 0:
+            total = ""
+        else:
+            total = str(self.text_display.display_total)
+
+        self.display_total.setText("Total Displayed: {}".format(total))
 
 """Creates a list (all_dicts) from the return of the function call.
 Creates a list (category_item) from the keys of a dictionary in the imported module. The dictionary the keys are
