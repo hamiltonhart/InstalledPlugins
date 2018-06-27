@@ -283,7 +283,12 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
             writerfile.writerow(["Total " + category + ": " + str(len(list_to_export))])
 
 def main():
-    pass
+    all_plugins = create_new_classes()
+    save_name = input("Filename: ")
+    save_path = input("Save to: ")
+    filename = os.path.join(save_path, save_name)
+    export_plugins_list(filename, all_plugins, [x for x in plugin_info_dict.keys()], all_plugins=True, sep_files=True)
+    print("All plugins exported as separate files to ... {}".format(filename))
 
 
 if __name__ == "__main__":
