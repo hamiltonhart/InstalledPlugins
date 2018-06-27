@@ -16,9 +16,6 @@ import subprocess
 
 
 # Variables
-website_key = "CFBundleIdentifier"
-version_key = "CFBundleShortVersionString"
-
 # AAX
 aax_base_path = "/Library/Application Support/Avid/Audio/"
 plug_aax_used_path = os.path.join(aax_base_path, "Plug-Ins/")
@@ -52,13 +49,6 @@ plugin_info_dict = {"AAX": [plug_aax_used_path, aax_suffix, plist_path],
                     "VST3": [plug_vst3_path, vst3_suffix, plist_path]}
 
 
-'''Needs resolution:
-1) plugin_type
-2) confirm how path is defined, possibly a dictionary with plugin_type and paths
-    - AU
-    - VST
-    - VST3
-'''
 class Plugin:
 
     def __init__(self, type, fullname, path, suffix, version):
@@ -149,23 +139,37 @@ class AU(Plugin):
     #     return cls(input_list[0], input_list[1], input_list[2])
 
 
-def read_plist(path, vers_keyword, plist_path):  # web_keyword
+def read_plist(path, plist_path):  # web_keyword
+    key_found = False
+    version_keywords = ["CFBundleShortVersionString", "CFBundleVersion"]
+
     plist_loc = os.path.join(path, plist_path)
     with open(plist_loc, "rb") as file:
         file_info = plistlib.load(file)
-    version = file_info[vers_keyword]
+
+    version_keyword = 0
+    while not key_found:
+        try:
+            version = file_info[version_keywords[version_keyword]]
+            key_found = True
+        except KeyError:
+            version_keyword += 1
+            if (version_keyword - 1) > len(version_keywords):
+                version = "Version Not Found"
+                key_found = True
+
     # website = file_info[web_keyword]
     return version  # website
 
 """Document function once amended."""
-def find_plugin_info(path, suffix, vers_keyword, plist_path, new_class, type):  # web_keyword,
+def find_plugin_info(path, suffix, plist_path, new_class, type):  # web_keyword,
     info_dict = {}
     for root, dirs, files in os.walk(path):
         for dir in dirs:
             if dir.endswith(suffix):
                 full_path = os.path.join(root, dir)
-                version = read_plist(full_path, vers_keyword, plist_path)
-                add_class = new_class(type, dir, full_path, suffix, read_plist(full_path, vers_keyword, plist_path))
+                version = read_plist(full_path, plist_path)
+                add_class = new_class(type, dir, full_path, suffix, read_plist(full_path, plist_path))
                 info_dict[add_class.shortname] = add_class
     return info_dict  # remove dictionary creation and make class list
 
@@ -199,7 +203,7 @@ def create_new_classes():
     plugin_classes = {"AAX": AAX, "AAX Unused": AAX, "Waves": Waves, "VST": VST, "VST3": VST3, "AU": AU}
 
     for key, value in plugin_info_dict.items():
-        new_item = find_plugin_info(value[0], value[1], version_key, value[2], plugin_classes[key], key)
+        new_item = find_plugin_info(value[0], value[1], value[2], plugin_classes[key], key)
         all_plugins.append(new_item)
 
     return all_plugins
