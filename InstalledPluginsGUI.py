@@ -235,7 +235,7 @@ class Window(QtWidgets.QWidget):
 
     def show_view_total(self):
         if self.text_display.display_total == 0:
-            total = ""
+            total = "0"
         else:
             total = str(self.text_display.display_total)
 
