@@ -157,7 +157,7 @@ class Window(QtWidgets.QWidget):
         if self.append_check.isChecked():
             append = True
         text_results = [x.gui_output() for x in InstalledPlugins_ForGUI.search_dicts(self.search_box.text().lower(),
-                                                                            all_plugins)]
+                                                                            all_dicts)]
         self.text_display.addItem(text_results, append=append)
 
     def view_button_click(self):
@@ -180,15 +180,14 @@ class Window(QtWidgets.QWidget):
                     self.text_display.addItem(text_results, append=append, count=count)
                     count += 1
 
-
     def export_button_click(self):  # Needs updating?
         path = QtWidgets.QFileDialog.getSaveFileName(self, "Save CSV", os.getenv("HOME"), "CSV.csv")
         if path != '':
             if self.checkboxes["All Plugins"].isChecked() and self.export_sep_files.isChecked():
-                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_plugins, [x for x in categories.keys()],
+                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_dicts, [x for x in categories.keys()],
                                                             sep_files=True)  # Not Print
             elif self.checkboxes["All Plugins"].isChecked():
-                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_plugins, [x for x in categories.keys()])
+                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_dicts, [x for x in categories.keys()])
             elif not self.export_sep_files.isChecked():
                 to_export = []
                 for item in categories:

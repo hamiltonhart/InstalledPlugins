@@ -218,7 +218,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                     writerfile.writerow([category[count]])
                     writerfile.writerow(["{:^2}".format("Plugin"),
                                          "{:^2}".format("Version"),
-                                         "{:^2}".format("Location")])
+                                         "{:^2}".format("Type")])
                     for plugin in plugin_class.values():
                         writerfile.writerow(plugin.file_output())
                     writerfile.writerow([" "])
@@ -230,7 +230,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                     writerfile.writerow([category[count]])
                     writerfile.writerow(["{:^2}".format("Plugin"),
                                          "{:^2}".format("Version"),
-                                         "{:^2}".format("Location")])
+                                         "{:^2}".format("Type")])
                     for plugin in plugin_class.values():
                         writerfile.writerow(plugin.file_output())
                     writerfile.writerow([" "])
@@ -244,7 +244,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                 writerfile.writerow([category[count]])
                 writerfile.writerow(["{:^2}".format("Plugin"),
                                      "{:^2}".format("Version"),
-                                     "{:^2}".format("Location")])
+                                     "{:^2}".format("Type")])
                 for plugin in plugin_class.values():
                     writerfile.writerow(plugin.file_output())
                 writerfile.writerow([" "])
@@ -254,7 +254,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
     else:
         with open(new_file + "_" + category + ".csv", "w+") as save_file:
             writerfile = csv.writer(save_file, delimiter=",")
-            writerfile.writerow(["Plugin", "Version", "Location"])
+            writerfile.writerow(["Plugin", "Version", "Type"])
             writerfile.writerow([category])
 
             for printer in list_to_export.values():
