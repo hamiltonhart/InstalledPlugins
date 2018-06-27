@@ -210,16 +210,18 @@ def create_new_classes():
 
 def export_plugins_list(filename, list_to_export, category, all_plugins=True, sep_files=False):
 
-    new_file = filename
-
     if all_plugins:
         count = 0
         if sep_files:
+            source_path, stripped_filename = filename.rsplit("/", 1)
+            os.system("mkdir {}".format(filename))
+            filename = os.path.join(filename, stripped_filename)
             for plugin_class in list_to_export:
                 if len(plugin_class) == 0:
                     pass
+                    count += 1
                 else:
-                    with open(new_file + "_" + category[count] + ".csv", "w+") as save_file:
+                    with open(filename + "_" + category[count] + ".csv", "w+") as save_file:
                         writerfile = csv.writer(save_file, delimiter=",")
                         writerfile.writerow([category[count]])
                         writerfile.writerow(["{:^2}".format("Plugin"),
@@ -231,11 +233,12 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                         writerfile.writerow([" "])
                         count += 1
         else:
-            with open(new_file + ".csv", "w+") as save_file:
+            with open(filename + ".csv", "w+") as save_file:
                 writerfile = csv.writer(save_file, delimiter=",")
                 for plugin_class in list_to_export:
                     if len(plugin_class) == 0:
                         pass
+                        count += 1
                     else:
                         writerfile.writerow([category[count]])
                         writerfile.writerow(["{:^2}".format("Plugin"),
@@ -249,7 +252,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
 
     elif not sep_files:
         count = 0
-        with open(new_file + ".csv", "w+") as save_file:
+        with open(filename + ".csv", "w+") as save_file:
             writerfile = csv.writer(save_file, delimiter=",")
             for plugin_class in list_to_export:
                 if plugin_class == 0:
@@ -267,7 +270,10 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
 
 
     else:
-        with open(new_file + "_" + category + ".csv", "w+") as save_file:
+        source_path, stripped_filename = filename.rsplit("/", 1)
+        os.system("mkdir {}".format(filename))
+        filename = os.path.join(filename, stripped_filename)
+        with open(filename + "_" + category + ".csv", "w+") as save_file:
             writerfile = csv.writer(save_file, delimiter=",")
             writerfile.writerow(["Plugin", "Version", "Type"])
             writerfile.writerow([category])

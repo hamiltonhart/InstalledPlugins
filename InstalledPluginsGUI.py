@@ -246,7 +246,7 @@ Creates a list (category_item) from the keys of a dictionary in the imported mod
 derived from is iterated over to get the return of create_new_classes().
 Creates a categories dictionary from the above lists using the category_item list as the key and all_dicts as the 
 value.
-Finally, the all_dicts list is added to the categories dict.
+Finally, the all_dicts list is added to the categories dictionary.
 """
 all_dicts = InstalledPlugins_ForGUI.create_new_classes()
 category_item = [key for key in InstalledPlugins_ForGUI.plugin_info_dict.keys()]
