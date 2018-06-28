@@ -32,11 +32,11 @@ waves_suffix = ".bundle"
 other_plug_base = "/Library/Audio/Plug-Ins/"
 plug_vst_path = os.path.join(other_plug_base, "VST")
 plug_vst3_path = os.path.join(other_plug_base, "VST3")
-plug_au_path = os.path.join(other_plug_base, "Audio Units")
+plug_au_path = os.path.join(other_plug_base, "Components")
 
 vst_suffix = ".vst"
 vst3_suffix = ".vst3"
-au_suffix = ".au"
+au_suffix = ".component"
 
 plist_path = "Contents/Info.plist"
 
@@ -145,7 +145,12 @@ def read_plist(path, plist_path):  # web_keyword
 
     plist_loc = os.path.join(path, plist_path)
     with open(plist_loc, "rb") as file:
-        file_info = plistlib.load(file)
+        try:
+            file_info = plistlib.load(file)
+        except:
+            print("'{}' is not a valid path.")
+            version = "Version Not Found"
+            return version
 
     version_keyword = 0
     while not key_found:
