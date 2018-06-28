@@ -1,0 +1,21 @@
+Installed Plugins
+
+READ ME
+
+Compatibility:
+OSX 10.10+
+2010 and older
+
+Installation Instructions:
+
+The Installed Plugins app must be made executable. The RunFirst.sh script will do this for you. 
+
+1) Run the RunFirst.sh script in the terminal.
+	- Navigate to the script and run it with ./RunFirst.sh
+	- OR in terminal, type 'bash ' and click and drag the script to the terminal
+
+2) Drag the Installed Plugins app to the terminal and press ENTER
+
+Once the Installed Plugins app is confirmed to run. This file and the RunFirst.sh script can be deleted. 
+
+Installed Plugins can now be run from a computer or thumb drive.

@@ -143,14 +143,14 @@ def read_plist(path, plist_path):  # web_keyword
     key_found = False
     version_keywords = ["CFBundleShortVersionString", "CFBundleVersion"]
 
-    plist_loc = os.path.join(path, plist_path)
-    with open(plist_loc, "rb") as file:
-        try:
+    try:
+        plist_loc = os.path.join(path, plist_path)
+        with open(plist_loc, "rb") as file:
             file_info = plistlib.load(file)
-        except:
-            print("'{}' is not a valid path.")
-            version = "Version Not Found"
-            return version
+    except:
+        print("'{}' is not a valid path.".format(path))
+        version = "Version Not Found"
+        return version
 
     version_keyword = 0
     while not key_found:
@@ -290,7 +290,7 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
 def main():
     all_plugins = create_new_classes()
     save_name = input("Filename: ")
-    save_path = input("Save to: ")
+    save_path = input("Save to: ").strip()
     filename = os.path.join(save_path, save_name)
     export_plugins_list(filename, all_plugins, [x for x in plugin_info_dict.keys()], all_plugins=True, sep_files=True)
     print("All plugins exported as separate files to ... {}".format(filename))
