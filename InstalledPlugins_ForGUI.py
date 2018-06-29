@@ -13,6 +13,7 @@ import plistlib
 from getpass import getpass
 import csv
 import subprocess
+import InstalledPluginsGUI
 
 
 # Variables
@@ -286,6 +287,17 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
             for printer in list_to_export.values():
                 writerfile.writerow(printer.file_output())
             writerfile.writerow(["Total " + category + ": " + str(len(list_to_export))])
+
+def get_plugins():
+    all_dicts = create_new_classes()
+    category_item = [key for key in plugin_info_dict.keys()]
+    categories = {}
+    for i, item in enumerate(all_dicts):
+        categories[category_item[i]] = item
+    categories["All Plugins"] = all_dicts
+
+
+    return categories, all_dicts
 
 def main():
     all_plugins = create_new_classes()

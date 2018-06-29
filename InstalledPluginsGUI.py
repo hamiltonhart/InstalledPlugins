@@ -1,7 +1,5 @@
-import sys
 import os
 import csv
-# from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets, QtCore, QtGui
 import InstalledPlugins_ForGUI
 
@@ -57,8 +55,15 @@ class ListView(QtWidgets.QTableWidget):
 
 # Defines the main window
 class Window(QtWidgets.QWidget):
-    def __init__(self):
+    def __init__(self, categories, all_dicts, loading_window=None):
         super(Window, self).__init__()
+
+        if loading_window != None:
+            loading_window.close()
+        else:
+            print("No loading window")
+        self.categories = categories
+        self.all_dicts = all_dicts
 
         self.init_ui()
 
@@ -101,7 +106,7 @@ class Window(QtWidgets.QWidget):
 
         # Plugin type checkboxes are created. The categories dictionary keys created by class plugins from below are
         # used for the labels.
-        self.checkbox_labels = [x for x in categories.keys()]
+        self.checkbox_labels = [x for x in self.categories.keys()]
         self.checkboxes = {}
         for chk_label in self.checkbox_labels:
             self.chk_label = chk_label
@@ -119,10 +124,11 @@ class Window(QtWidgets.QWidget):
         for btn_label in btn_labels:
             self.btn_label = btn_label
             btns[btn_label] = QtWidgets.QPushButton(self.btn_label)
-            h_box_buttons.addWidget(btns[btn_label])
+            h_box_buttons.addWidget(btns[btn_label], 0, QtCore.Qt.AlignBottom)
 
         # Options checkboxes are created. Needed tooltips are created
         self.export_sep_files = QtWidgets.QCheckBox("Export Categories")
+        self.export_sep_files.setChecked(True)
         self.export_sep_files.setToolTip("Exports the selected plugin types/locations into separate files. "
                                          "Type/location will be appended to the filename supplied for clarity.")
         self.append_check = QtWidgets.QCheckBox("Append")
@@ -131,8 +137,8 @@ class Window(QtWidgets.QWidget):
         self.export_displayed_button.setToolTip("Exports only what is displayed in the box below regardless of "
                                                 "selection on the left.")
 
-        h_box_chk_options.addWidget(self.export_sep_files)
-        h_box_chk_options.addWidget(self.export_displayed_button)
+        h_box_chk_options.addWidget(self.export_sep_files, 0, QtCore.Qt.AlignTop)
+        h_box_chk_options.addWidget(self.export_displayed_button, 0, QtCore.Qt.AlignTop)
 
         # Instance of the table view is created. Header labels are defined.
         self.text_display = ListView(0, 3, "Plugin", "Version", "Type")
@@ -170,7 +176,7 @@ class Window(QtWidgets.QWidget):
         if self.append_check.isChecked():
             append = True
         text_results = [x.gui_output() for x in InstalledPlugins_ForGUI.search_dicts(self.search_box.text().lower(),
-                                                                            all_dicts)]
+                                                                            self.all_dicts)]
         self.text_display.addItem(text_results, append=append)
         self.show_view_total()
 
@@ -178,11 +184,11 @@ class Window(QtWidgets.QWidget):
         append = False
         if self.append_check.isChecked():
             append = True
-        search_categories = [cat for cat in categories.keys()]
+        search_categories = [cat for cat in self.categories.keys()]
         if self.checkboxes["All Plugins"].isChecked():
             count = 0
             for category in search_categories[:-1]:
-                text_results = InstalledPlugins_ForGUI.list_dicts(categories[category])
+                text_results = InstalledPlugins_ForGUI.list_dicts(self.categories[category])
                 self.text_display.addItem(text_results, append=append, count=count)
                 count += 1
 
@@ -190,7 +196,7 @@ class Window(QtWidgets.QWidget):
             count = 0
             for item in search_categories[:-1]:
                 if self.checkboxes[item].isChecked():
-                    text_results = InstalledPlugins_ForGUI.list_dicts(categories[item])
+                    text_results = InstalledPlugins_ForGUI.list_dicts(self.categories[item])
                     self.text_display.addItem(text_results, append=append, count=count)
                     count += 1
 
@@ -200,21 +206,23 @@ class Window(QtWidgets.QWidget):
         path = QtWidgets.QFileDialog.getSaveFileName(self, "Save CSV", os.getenv("HOME"), "CSV.csv")
         if path != '':
             if self.checkboxes["All Plugins"].isChecked() and self.export_sep_files.isChecked():
-                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_dicts, [x for x in categories.keys()],
-                                                            sep_files=True)  # Not Print
+                InstalledPlugins_ForGUI.export_plugins_list(path[0], self.all_dicts, [x for x in
+                                                                     self.categories.keys()],sep_files=True)
             elif self.checkboxes["All Plugins"].isChecked():
-                InstalledPlugins_ForGUI.export_plugins_list(path[0], all_dicts, [x for x in categories.keys()])
+                InstalledPlugins_ForGUI.export_plugins_list(path[0], self.all_dicts, [x for x in
+                                                                                      self.categories.keys()])
             elif not self.export_sep_files.isChecked():
                 to_export = []
-                for item in categories:
+                for item in self.categories:
                     if self.checkboxes[item].isChecked():
-                        to_export.append(categories[item])
-                InstalledPlugins_ForGUI.export_plugins_list(path[0], to_export, [x for x in categories.keys()],
+                        to_export.append(self.categories[item])
+                InstalledPlugins_ForGUI.export_plugins_list(path[0], to_export, [x for x in self.categories.keys()],
                                                             all_plugins=False)
             else:
-                for i, item in enumerate(categories):
+                for i, item in enumerate(self.categories):
                     if self.checkboxes[item].isChecked():
-                        InstalledPlugins_ForGUI.export_plugins_list(path[0], categories[item], item, all_plugins=False,
+                        InstalledPlugins_ForGUI.export_plugins_list(path[0], self.categories[item], item,
+                                                                    all_plugins=False,
                                                                     sep_files=True)
 
     def clear_button_click(self):
@@ -241,6 +249,48 @@ class Window(QtWidgets.QWidget):
 
         self.display_total.setText("Total Displayed: {}".format(total))
 
+class Ui_LoadingBar(QtWidgets.QWidget):
+   def __init__(self):
+       super(Ui_LoadingBar, self).__init__()
+
+       self.setupUi()
+       # self.show()
+
+   def setupUi(self):
+       self.setObjectName("LoadingBar")
+       self.resize(598, 107)
+       self.setMinimumSize(QtCore.QSize(598, 107))
+       self.setMaximumSize(QtCore.QSize(598, 107))
+       self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+       self.verticalLayout_2 = QtWidgets.QVBoxLayout(self)
+       self.verticalLayout_2.setObjectName("verticalLayout_2")
+       self.v_layout_top = QtWidgets.QVBoxLayout()
+       self.v_layout_top.setObjectName("v_layout_top")
+       self.label = QtWidgets.QLabel(self)
+       self.label.setObjectName("label")
+       self.v_layout_top.addWidget(self.label, 0, QtCore.Qt.AlignHCenter|QtCore.Qt.AlignBottom)
+       self.verticalLayout_2.addLayout(self.v_layout_top)
+       self.v_layout_btm = QtWidgets.QVBoxLayout()
+       self.v_layout_btm.setObjectName("v_layout_btm")
+       self.progressBar = QtWidgets.QProgressBar(self)
+       self.progressBar.setMinimumSize(QtCore.QSize(572, 20))
+       self.progressBar.setMaximumSize(QtCore.QSize(572, 20))
+       self.progressBar.setProperty("value", 24)
+       self.progressBar.setObjectName("progressBar")
+       self.v_layout_btm.addWidget(self.progressBar, 0, QtCore.Qt.AlignTop)
+       self.verticalLayout_2.addLayout(self.v_layout_btm)
+
+       self.retranslateUi()
+       QtCore.QMetaObject.connectSlotsByName(self)
+
+   def retranslateUi(self):
+       _translate = QtCore.QCoreApplication.translate
+       self.setWindowTitle(_translate("LoadingBar", "Plugin Progress"))
+       self.label.setText(_translate("LoadingBar", "<html><head/><body><p>"
+                                                   "<span style=\" font-size:18pt; font-weight:600;\">"
+                                                   "Loading Plugins...</span></p></body></html>"))
+
+
 """Creates a list (all_dicts) from the return of the function call.
 Creates a list (category_item) from the keys of a dictionary in the imported module. The dictionary the keys are
 derived from is iterated over to get the return of create_new_classes().
@@ -248,14 +298,9 @@ Creates a categories dictionary from the above lists using the category_item lis
 value.
 Finally, the all_dicts list is added to the categories dictionary.
 """
-all_dicts = InstalledPlugins_ForGUI.create_new_classes()
-category_item = [key for key in InstalledPlugins_ForGUI.plugin_info_dict.keys()]
-categories = {}
-for i, item in enumerate(all_dicts):
-    categories[category_item[i]] = item
-categories["All Plugins"] = all_dicts
+def main():
+    pass
 
-app = QtWidgets.QApplication(sys.argv)
+if __name__ == "__main__":
+    main()
 
-window = Window()
-sys.exit(app.exec_())
