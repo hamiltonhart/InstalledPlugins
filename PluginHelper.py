@@ -6,11 +6,9 @@ import InstalledPluginsGUI
 def main():
     app = QtWidgets.QApplication(sys.argv)
 
-    loading_window = InstalledPluginsGUI.Ui_LoadingBar()
-    loading_window.show()
-
-    categories, all_dicts = InstalledPlugins_ForGUI.get_plugins()
-    main_window = InstalledPluginsGUI.Window(categories, all_dicts, loading_window=loading_window)
+    categories = InstalledPlugins_ForGUI.get_plugins()
+    name = InstalledPlugins_ForGUI.get_computername()
+    main_window = InstalledPluginsGUI.Window(categories, computername=name, loading_window=None)
 
     sys.exit(app.exec_())
 

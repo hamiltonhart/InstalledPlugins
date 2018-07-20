@@ -13,8 +13,6 @@ import plistlib
 from getpass import getpass
 import csv
 import subprocess
-import InstalledPluginsGUI
-
 
 # Variables
 # AAX
@@ -167,16 +165,34 @@ def read_plist(path, plist_path):  # web_keyword
     # website = file_info[web_keyword]
     return version  # website
 
+def get_computername():
+    proc = subprocess.Popen(["scutil", "--get", "ComputerName"], stdout=subprocess.PIPE, universal_newlines=True)
+    output = proc.stdout.read()
+
+    return output.strip("\n")
+
 """Document function once amended."""
 def find_plugin_info(path, suffix, plist_path, new_class, type):  # web_keyword,
     info_dict = {}
-    for root, dirs, files in os.walk(path):
-        for dir in dirs:
-            if dir.endswith(suffix):
-                full_path = os.path.join(root, dir)
-                version = read_plist(full_path, plist_path)
-                add_class = new_class(type, dir, full_path, suffix, read_plist(full_path, plist_path))
-                info_dict[add_class.shortname] = add_class
+
+    tmp = subprocess.Popen(["ls", path], stdout=subprocess.PIPE, universal_newlines=True)
+    listed_output = tmp.stdout.read()
+    listed_output = listed_output.split("\n")
+    listed_output.pop(-1)
+    for directory in listed_output:
+        if directory.endswith(suffix):
+
+            full_path = os.path.join(path, directory)
+            add_class = new_class(type, directory, full_path, suffix, read_plist(full_path, plist_path))
+            info_dict[add_class.shortname] = add_class
+        else:
+
+            for root, dirs, files in os.walk(os.path.join(path, directory)):
+                for dir in dirs:
+                    if dir.endswith(suffix):
+                        full_path = os.path.join(root, dir)
+                        add_class = new_class(type, dir, full_path, suffix, read_plist(full_path, plist_path))
+                        info_dict[add_class.shortname] = add_class
     return info_dict  # remove dictionary creation and make class list
 
 def swap_used_unused():
@@ -204,12 +220,16 @@ def list_dicts(dict_to_search):
         text_to_return.append(class_item.gui_output())
     return text_to_return
 
-def create_new_classes():
+# Returns a list of dictionaries. Each dictionary is represents a class of plugins
+def create_new_classes(external_path=None):
     all_plugins = []
     plugin_classes = {"AAX": AAX, "AAX Unused": AAX, "Waves": Waves, "VST": VST, "VST3": VST3, "AU": AU}
 
     for key, value in plugin_info_dict.items():
-        new_item = find_plugin_info(value[0], value[1], value[2], plugin_classes[key], key)
+        if external_path == None:
+            new_item = find_plugin_info(value[0], value[1], value[2], plugin_classes[key], key)
+        else:
+            new_item = find_plugin_info(external_path + value[0], value[1], value[2], plugin_classes[key], key)
         all_plugins.append(new_item)
 
     return all_plugins
@@ -218,41 +238,46 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
 
     if all_plugins:
         count = 0
-        if sep_files:
-            source_path, stripped_filename = filename.rsplit("/", 1)
-            os.system("mkdir {}".format(filename))
-            filename = os.path.join(filename, stripped_filename)
-            for plugin_class in list_to_export:
-                if len(plugin_class) == 0:
-                    count += 1
-                else:
-                    with open(filename + "_" + category[count] + ".csv", "w+") as save_file:
-                        writerfile = csv.writer(save_file, delimiter=",")
-                        writerfile.writerow([category[count]])
-                        writerfile.writerow(["{:^2}".format("Plugin"),
-                                             "{:^2}".format("Version"),
-                                             "{:^2}".format("Type")])
-                        for plugin in plugin_class.values():
-                            writerfile.writerow(plugin.file_output())
-                        writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
-                        writerfile.writerow([" "])
-                        count += 1
-        else:
-            with open(filename + ".csv", "w+") as save_file:
-                writerfile = csv.writer(save_file, delimiter=",")
+        try:
+            if sep_files:
+                source_path, stripped_filename = filename.rsplit("/", 1)
+                os.system("mkdir {}".format(filename))
+                filename = os.path.join(filename, stripped_filename)
                 for plugin_class in list_to_export:
                     if len(plugin_class) == 0:
                         count += 1
                     else:
-                        writerfile.writerow([category[count]])
-                        writerfile.writerow(["{:^2}".format("Plugin"),
-                                             "{:^2}".format("Version"),
-                                             "{:^2}".format("Type")])
-                        for plugin in plugin_class.values():
-                            writerfile.writerow(plugin.file_output())
-                        writerfile.writerow([" "])
-                        count += 1
-                writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
+                        with open(filename + "_" + category[count] + ".csv", "w+") as save_file:
+                            writerfile = csv.writer(save_file, delimiter=",")
+                            writerfile.writerow([category[count]])
+                            writerfile.writerow(["{:^2}".format("Plugin"),
+                                                 "{:^2}".format("Version"),
+                                                 "{:^2}".format("Type")])
+                            for plugin in plugin_class.values():
+                                writerfile.writerow(plugin.file_output())
+                            writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
+                            writerfile.writerow([" "])
+                            count += 1
+            else:
+                with open(filename + ".csv", "w+") as save_file:
+                    writerfile = csv.writer(save_file, delimiter=",")
+                    for plugin_class in list_to_export:
+                        if len(plugin_class) == 0:
+                            count += 1
+                        else:
+                            writerfile.writerow([category[count]])
+                            writerfile.writerow(["{:^2}".format("Plugin"),
+                                                 "{:^2}".format("Version"),
+                                                 "{:^2}".format("Type")])
+                            for plugin in plugin_class.values():
+                                writerfile.writerow(plugin.file_output())
+                            writerfile.writerow([" "])
+                            writerfile.writerow(["Total " + category[count] + ": " + str(len(plugin_class))])
+                            writerfile.writerow([" "])
+                            count += 1
+
+        except ValueError:
+            pass
 
     elif not sep_files:
         count = 0
@@ -273,8 +298,6 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                     writerfile.writerow([" "])
                     count += 1
 
-
-
     else:
         source_path, stripped_filename = filename.rsplit("/", 1)
         os.system("mkdir {}".format(filename))
@@ -288,16 +311,17 @@ def export_plugins_list(filename, list_to_export, category, all_plugins=True, se
                 writerfile.writerow(printer.file_output())
             writerfile.writerow(["Total " + category + ": " + str(len(list_to_export))])
 
-def get_plugins():
-    all_dicts = create_new_classes()
+
+def get_plugins(external_path=None):
+    all_dicts = create_new_classes(external_path=external_path)
     category_item = [key for key in plugin_info_dict.keys()]
     categories = {}
     for i, item in enumerate(all_dicts):
         categories[category_item[i]] = item
     categories["All Plugins"] = all_dicts
 
+    return categories  # all_dicts
 
-    return categories, all_dicts
 
 def main():
     all_plugins = create_new_classes()
