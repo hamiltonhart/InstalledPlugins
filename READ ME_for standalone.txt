@@ -2,6 +2,7 @@ Installed Plugins
 
 READ ME
 
+# Update compatibility if needed and delete this comment #
 Compatibility:
 OSX 10.10+
 2010 and older
